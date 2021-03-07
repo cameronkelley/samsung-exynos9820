@@ -21,9 +21,9 @@ jobs:
         set -e -o pipefail
         ./cruelbuild config                    \
                      model=${{ matrix.model }} \
-                     name="Cruel-V3.10-Magisk-v21.4"         \
+                     name="Cruel-V3.10-No-ZRAM"         \
                      toolchain=$TOOLCHAIN      \
-                     +magisk=v21.4                  \
+                     +magisk=v22.0                 \
                      +nohardening              \
                      +ttl                      \
                      +wireguard                \
@@ -32,6 +32,7 @@ jobs:
                      +ntfs                     \
                      +morosound                \
                      +boeffla_wl_blocker       \
+                     +nozram       \
         2>&1 | tee config.info
     - name: Install gcc-aarch64-linux-gnu
       if: env.TOOLCHAIN == 'system-gcc' || env.TOOLCHAIN == 'system-clang'
