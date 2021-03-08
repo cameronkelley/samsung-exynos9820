@@ -16,15 +16,27 @@ else
 	else
 		nver="$1"
 	fi
-	magisk_link="https://github.com/topjohnwu/Magisk/releases/download/${nver}/Magisk-${nver}.zip"
+	magisk_link="https://github.com/topjohnwu/Magisk/releases/download/${nver}/Magisk-${nver}.apk"
 fi
 
 if [ \( -n "$nver" \) -a \( "$nver" != "$ver" \) -o ! \( -f "$DIR/arm/magiskinit64" \) -o \( "$nver" = "canary" \) ]
 then
 	echo "Updating Magisk from $ver to $nver"
 	curl -s --output "$DIR/magisk.zip" -L "$magisk_link"
-	unzip -o "$DIR/magisk.zip" arm/magiskinit64 -d "$DIR" || unzip -o "$DIR/magisk.zip" lib/armeabi-v7a/libmagiskinit.so -d "$DIR"
-	mv -f "$DIR/arm/magiskinit64" "$DIR/magiskinit" || mv -f "$DIR/lib/armeabi-v7a/libmagiskinit.so" "$DIR/magiskinit"
+	if fgrep 'Not Found' "$DIR/magisk.zip"; then
+		curl -s --output "$DIR/magisk.zip" -L "${magisk_link%.apk}.zip"
+	fi
+	if unzip -o "$DIR/magisk.zip" arm/magiskinit64 -d "$DIR"; then
+		mv -f "$DIR/arm/magiskinit64" "$DIR/magiskinit"
+		: > "$DIR/magisk32.xz"
+		: > "$DIR/magisk64.xz"
+	else
+		unzip -o "$DIR/magisk.zip" lib/armeabi-v7a/libmagiskinit.so lib/armeabi-v7a/libmagisk32.so lib/armeabi-v7a/libmagisk64.so -d "$DIR"
+		mv -f "$DIR/lib/armeabi-v7a/libmagiskinit.so" "$DIR/magiskinit"
+		mv -f "$DIR/lib/armeabi-v7a/libmagisk32.so" "$DIR/magisk32"
+		mv -f "$DIR/lib/armeabi-v7a/libmagisk64.so" "$DIR/magisk64"
+		xz --force --check=crc32 "$DIR/magisk32" "$DIR/magisk64"
+	fi
 	echo -n "$nver" > "$DIR/magisk_version"
 	rm "$DIR/magisk.zip"
 	touch "$DIR/initramfs_list"
